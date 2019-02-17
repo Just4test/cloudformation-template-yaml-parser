@@ -1,0 +1,4 @@
+*.pyc
+/dist
+/cfn_yaml.egg-info
+/build
