@@ -28,7 +28,7 @@ class Base64(CfnFunc):
   
   @classmethod
   def from_yaml(cls, loader, node):
-    return Base64(node.value)
+    return cls(node.value)
 
   @classmethod
   def to_yaml(cls, dumper, data):
@@ -51,7 +51,7 @@ class Ref(CfnFunc):
   
   @classmethod
   def from_yaml(cls, loader, node):
-    return Ref(node.value)
+    return cls(node.value)
 
   @classmethod
   def to_yaml(cls, dumper, data):
@@ -67,7 +67,7 @@ class GetAtt(CfnFunc):
   
   @classmethod
   def from_yaml(cls, loader, node):
-    return GetAtt(*[loader.construct_object(v) for v in node.value])
+    return cls(*[loader.construct_object(v) for v in node.value])
 
   @classmethod
   def to_yaml(cls, dumper, data):
@@ -79,12 +79,14 @@ class GetAtt(CfnFunc):
   def __repr__(self):
     return '<GetAtt {}>'.format('.'.join(self.names))
 
+
+
 class Equals(CfnFunc):
   yaml_tag = '!Equals'
   
   @classmethod
   def from_yaml(cls, loader, node):
-    return Equals(loader.construct_object(node.value[0]), loader.construct_object(node.value[1]))
+    return cls(loader.construct_object(node.value[0]), loader.construct_object(node.value[1]))
 
   @classmethod
   def to_yaml(cls, dumper, data):
@@ -107,7 +109,7 @@ class Join(CfnFunc):
   
     delimiter = loader.construct_object(node.value[0])
     values = loader.construct_object(node.value[1])
-    ret = Join(delimiter, *values)
+    ret = cls(delimiter, *values)
     return ret
 
   @classmethod
@@ -120,3 +122,29 @@ class Join(CfnFunc):
     
   def __repr__(self):
     return '<Join "{}".join({})>'.format(self.delimiter, self.values)
+
+
+
+class Select(CfnFunc):
+  yaml_tag = '!Select'
+  
+  @classmethod
+  def from_yaml(cls, loader, node):
+    # 默认情况下，loader会延迟解析复杂对象。如果不指定deep_construct，values的值会是一个空数组，并稍后填充。
+    loader.deep_construct = True 
+  
+    index = loader.construct_object(node.value[0])
+    values = loader.construct_object(node.value[1])
+    ret = cls(index, *values)
+    return ret
+
+  @classmethod
+  def to_yaml(cls, dumper, data):
+    return dumper.represent_sequence('!Select', [data.index, data.values])
+  
+  def __init__(self, index, *values):
+    self.index = index
+    self.values = list(values)
+    
+  def __repr__(self):
+    return '<Select {1}[{0}]>'.format(self.index, self.values)
