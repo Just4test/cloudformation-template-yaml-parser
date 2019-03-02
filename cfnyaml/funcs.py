@@ -32,7 +32,7 @@ class Base64(CfnFunc):
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_scalar('!Base64', data.base64str)
+    return dumper.represent_scalar(cls.yaml_tag, data.base64str)
     
   def __init__(self, value, isoriginal=False):
     if isoriginal:
@@ -55,7 +55,7 @@ class Ref(CfnFunc):
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_scalar('!Ref', data.logicalName)
+    return dumper.represent_scalar(cls.yaml_tag, data.logicalName)
   
   def __init__(self, logicalName):
     self.logicalName = logicalName
@@ -67,17 +67,17 @@ class GetAtt(CfnFunc):
   
   @classmethod
   def from_yaml(cls, loader, node):
-    return cls(*[loader.construct_object(v) for v in node.value])
+    return cls(node.value)
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence('!GetAtt', data.names)
+    return dumper.represent_scalar(cls.yaml_tag, data.path)
   
-  def __init__(self, *names):
-    self.names = names
+  def __init__(self, path):
+    self.path = path
     
   def __repr__(self):
-    return '<GetAtt {}>'.format('.'.join(self.names))
+    return '<GetAtt {}>'.format('.'.join(self.path))
 
 
 
@@ -90,7 +90,7 @@ class Equals(CfnFunc):
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence('!Equals', [data.value1, data.value2])
+    return dumper.represent_sequence(cls.yaml_tag, [data.value1, data.value2])
   
   def __init__(self, value1, value2):
     self.value1 = value1
@@ -114,7 +114,7 @@ class Join(CfnFunc):
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence('!Join', [data.delimiter, data.values])
+    return dumper.represent_sequence(cls.yaml_tag, [data.delimiter, data.values])
   
   def __init__(self, delimiter, *values):
     self.delimiter = delimiter
@@ -140,7 +140,7 @@ class Select(CfnFunc):
 
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence('!Select', [data.index, data.values])
+    return dumper.represent_sequence(cls.yaml_tag, [data.index, data.values])
   
   def __init__(self, index, *values):
     self.index = index
@@ -148,3 +148,53 @@ class Select(CfnFunc):
     
   def __repr__(self):
     return '<Select {1}[{0}]>'.format(self.index, self.values)
+    
+    
+
+class If(CfnFunc):
+  yaml_tag = '!If'
+  
+  @classmethod
+  def from_yaml(cls, loader, node):
+    return cls( \
+      loader.construct_object(node.value[0]), \
+      loader.construct_object(node.value[1]), \
+      loader.construct_object(node.value[2]))
+
+  @classmethod
+  def to_yaml(cls, dumper, data):
+    return dumper.represent_sequence(cls.yaml_tag, [data.condition, data.value_if_true, data.value_if_false])
+  
+  def __init__(self, condition, value_if_true, value_if_false):
+    self.condition = condition
+    self.value_if_true = value_if_true
+    self.value_if_false = value_if_false
+    
+  def __repr__(self):
+    return '<If {} ? {} : {}>'.format(self.condition, self.value_if_true, self.value_if_false)
+    
+
+    
+class Sub(CfnFunc):
+  yaml_tag = '!Sub'
+  
+  @classmethod
+  def from_yaml(cls, loader, node):
+    # 默认情况下，loader会延迟解析复杂对象。如果不指定deep_construct，values的值会是一个空数组，并稍后填充。
+    loader.deep_construct = True 
+  
+    template = loader.construct_object(node.value[0])
+    values = loader.construct_object(node.value[1])
+    ret = cls(template, **values)
+    return ret
+
+  @classmethod
+  def to_yaml(cls, dumper, data):
+    return dumper.represent_sequence(cls.yaml_tag, [data.template, data.values])
+  
+  def __init__(self, template, **values):
+    self.template = template
+    self.values = values
+    
+  def __repr__(self):
+    return '<Sub "{}".format({})>'.format(self.template, self.values)

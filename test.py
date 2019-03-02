@@ -22,6 +22,12 @@ class TestCase(unittest.TestCase):
     b = yaml.dump(yaml.load(a))
     
     assert(a==b)
+    
+  def test_Sub(self):
+    a = '!Sub\n- www.${Domain}\n- {Domain: github.com}\n'
+    b = yaml.dump(yaml.load(a))
+    
+    assert(a==b)
 
 if __name__ == '__main__':
   unittest.main()
