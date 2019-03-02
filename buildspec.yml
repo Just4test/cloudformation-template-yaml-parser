@@ -1,12 +1,12 @@
 version: 0.2
 
-#env:
+env:
   #variables:
      # key: "value"
      # key: "value"
-  #parameter-store:
-     # key: "value"
-     # key: "value"
+  parameter-store:
+     TWINE_USERNAME: /CodeBuild/TWINE_USERNAME
+     TWINE_PASSWORD: /CodeBuild/TWINE_PASSWORD
 
 phases:
   install:
