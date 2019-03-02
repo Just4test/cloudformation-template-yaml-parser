@@ -20,7 +20,11 @@ class TestCase(unittest.TestCase):
   def test_Select(self):
     a = "!Select\n- '1'\n- [apples, grapes, oranges, mangoes]\n"
     b = yaml.dump(yaml.load(a))
+    assert(a==b)
     
+    
+    a = "!Select\n- 0\n- {'Fn::GetAZs': ''}\n"
+    b = yaml.dump(yaml.load(a))
     assert(a==b)
     
   def test_Sub(self):

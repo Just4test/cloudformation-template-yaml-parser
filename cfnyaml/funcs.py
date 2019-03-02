@@ -109,16 +109,16 @@ class Join(CfnFunc):
   
     delimiter = loader.construct_object(node.value[0])
     values = loader.construct_object(node.value[1])
-    ret = cls(delimiter, *values)
+    ret = cls(delimiter, values)
     return ret
 
   @classmethod
   def to_yaml(cls, dumper, data):
     return dumper.represent_sequence(cls.yaml_tag, [data.delimiter, data.values])
   
-  def __init__(self, delimiter, *values):
+  def __init__(self, delimiter, values):
     self.delimiter = delimiter
-    self.values = list(values)
+    self.values = values
     
   def __repr__(self):
     return '<Join "{}".join({})>'.format(self.delimiter, self.values)
@@ -135,16 +135,16 @@ class Select(CfnFunc):
   
     index = loader.construct_object(node.value[0])
     values = loader.construct_object(node.value[1])
-    ret = cls(index, *values)
+    ret = cls(index, values)
     return ret
 
   @classmethod
   def to_yaml(cls, dumper, data):
     return dumper.represent_sequence(cls.yaml_tag, [data.index, data.values])
   
-  def __init__(self, index, *values):
+  def __init__(self, index, values):
     self.index = index
-    self.values = list(values)
+    self.values = values
     
   def __repr__(self):
     return '<Select {1}[{0}]>'.format(self.index, self.values)
@@ -185,14 +185,14 @@ class Sub(CfnFunc):
   
     template = loader.construct_object(node.value[0])
     values = loader.construct_object(node.value[1])
-    ret = cls(template, **values)
+    ret = cls(template, values)
     return ret
 
   @classmethod
   def to_yaml(cls, dumper, data):
     return dumper.represent_sequence(cls.yaml_tag, [data.template, data.values])
   
-  def __init__(self, template, **values):
+  def __init__(self, template, values):
     self.template = template
     self.values = values
     
