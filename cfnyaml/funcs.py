@@ -1,39 +1,24 @@
-import yaml
+from .funcbase import FuncBase
 import base64
+import yaml
 
-class CfnFunc(yaml.YAMLObject):
-  pass
-  
-class Base64(CfnFunc):
-  yaml_tag = '!Base64'
+
+
+
+class Ref(FuncBase):
+  argnames = 'logicalName'
+
+class Base64(FuncBase):
+  argnames = 'base64str'
   
   @property
   def originalstr(self):
-    return self._originalstr
+    return base64.b64decode(self.base64str).decode('utf8')
     
   @originalstr.setter
   def originalstr(self, value):
-    self._originalstr = value
-    self._base64str = base64.b64encode(value.encode('utf8')).decode()
-    
-  @property
-  def base64str(self):
-    return self._base64str
-    
-  @base64str.setter
-  def base64str(self, value):
-    self._base64str = value
-    self._originalstr = base64.b64decode(value).decode('utf8')
-    
+    self.base64str = base64.b64encode(value.encode('utf8')).decode()
   
-  @classmethod
-  def from_yaml(cls, loader, node):
-    return cls(node.value)
-
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_scalar(cls.yaml_tag, data.base64str)
-    
   def __init__(self, value, isoriginal=False):
     if isoriginal:
       self.originalstr = value
@@ -43,181 +28,102 @@ class Base64(CfnFunc):
   def __repr__(self):
     tmp = self.originalstr if len(self.originalstr) <= 13 else self.originalstr[0:10] + '...'
     return '<Base64 "{}">'.format(tmp)
-  
-  
-  
-class Ref(CfnFunc):
-  yaml_tag = '!Ref'
-  
-  @classmethod
-  def from_yaml(cls, loader, node):
-    return cls(node.value)
 
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_scalar(cls.yaml_tag, data.logicalName)
-  
-  def __init__(self, logicalName):
-    self.logicalName = logicalName
-  def __repr__(self):
-    return '<Ref "{}">'.format(self.logicalName)
 
-class GetAtt(CfnFunc):
-  yaml_tag = '!GetAtt'
+class Cidr(FuncBase):
+  argnames = ['ipblock', 'count', 'cidrbits']
+  reprtemplate = '<Cidr {} / {} ({})>'
   
-  @classmethod
-  def from_yaml(cls, loader, node):
-    return cls(node.value)
 
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_scalar(cls.yaml_tag, data.path)
+class FindInMap(FuncBase):
+  argnames = ['mapName', 'topLevelKey', 'secondLevelKey']
+  reprtemplate = '<FindInMap {}[{}][{}]>'
   
-  def __init__(self, path):
-    self.path = path
+class GetAtt(FuncBase):
+  argnames = 'path'
+
+  
+class GetAZs(FuncBase):
+  argnames = 'region'
+
+class ImportValue(FuncBase):
+  argnames = 'sharedValueToImport'
+  
+class Equals(FuncBase):
+  argnames = ['value1', 'value2']
+  reprtemplate = '<Equals {} == {}>'
     
-  def __repr__(self):
-    return '<GetAtt {}>'.format('.'.join(self.path))
+class Join(FuncBase):
+  argnames = ['delimiter', 'values']
+  reprtemplate = '<Equals {} == {}>'
 
 
 
-class Equals(CfnFunc):
-  yaml_tag = '!Equals'
+class Select(FuncBase):
+  argnames = ['index', 'values']
+  reprtemplate = '<Select {1}[{0}]>'
+
+class Split(FuncBase):
+  argnames = ['delimiter', 'sourcestr']
+  reprtemplate = '<Select "{1}".split("{0}")>'
+    
+class Sub(FuncBase):
+  argnames = ['template', 'values']
+  reprtemplate = '<Sub "{}".format({})>'
+
+class Transform(FuncBase):
+  argnames = ['name', 'params']
   
+  
+######## Condition Functions ###############
+    
+class And(FuncBase):
   @classmethod
   def from_yaml(cls, loader, node):
-    return cls(loader.construct_object(node.value[0]), loader.construct_object(node.value[1]))
-
+    def getv(v):
+      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+    return cls(*[getv(v) for v in node.value])
+    
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.value1, data.value2])
+      return dumper.represent_sequence(cls.yaml_tag, data.values)
   
-  def __init__(self, value1, value2):
-    self.value1 = value1
-    self.value2 = value2
-    
-  def __repr__(self):
-    return '<Equals {} == {}>'.format(self.value1, self.value2)
-    
-class Join(CfnFunc):
-  yaml_tag = '!Join'
-  
-  @classmethod
-  def from_yaml(cls, loader, node):
-    # 默认情况下，loader会延迟解析复杂对象。如果不指定deep_construct，values的值会是一个空数组，并稍后填充。
-    loader.deep_construct = True 
-  
-    delimiter = loader.construct_object(node.value[0])
-    values = loader.construct_object(node.value[1])
-    ret = cls(delimiter, values)
-    return ret
-
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.delimiter, data.values])
-  
-  def __init__(self, delimiter, values):
-    self.delimiter = delimiter
+  def __init__(self, *values):
     self.values = values
-    
+      
   def __repr__(self):
-    return '<Join "{}".join({})>'.format(self.delimiter, self.values)
-
-
-
-class Select(CfnFunc):
-  yaml_tag = '!Select'
+    return '<And {}>'.format(' && '.join([str(v) for v in self.values]))
   
+
+class Equals(FuncBase):
+  argnames = ['value1', 'value2']
+  reprtemplate = '<Equals {} == {} >'
+
+class If(FuncBase):
+  argnames = ['condition', 'value_if_true', 'value_if_false']
+  reprtemplate = '<If {} ? {} : {}>'
+  
+class Not(FuncBase):
+  argnames = ['value']
+  reprtemplate = '<Not {}>'
+  
+class Or(FuncBase):
   @classmethod
   def from_yaml(cls, loader, node):
-    # 默认情况下，loader会延迟解析复杂对象。如果不指定deep_construct，values的值会是一个空数组，并稍后填充。
-    loader.deep_construct = True 
-  
-    index = loader.construct_object(node.value[0])
-    values = loader.construct_object(node.value[1])
-    ret = cls(index, values)
-    return ret
-
+    def getv(v):
+      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+    return cls(*[getv(v) for v in node.value])
+    
   @classmethod
   def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.index, data.values])
-  
-  def __init__(self, index, values):
-    self.index = index
+      return dumper.represent_sequence(cls.yaml_tag, data.values)
+
+  def __init__(self, *values):
     self.values = values
-    
+      
   def __repr__(self):
-    return '<Select {1}[{0}]>'.format(self.index, self.values)
-    
-    
-
-class If(CfnFunc):
-  yaml_tag = '!If'
+    return '<Or {}>'.format(' || '.join([str(v) for v in self.values]))
   
-  @classmethod
-  def from_yaml(cls, loader, node):
-    return cls( \
-      loader.construct_object(node.value[0]), \
-      loader.construct_object(node.value[1]), \
-      loader.construct_object(node.value[2]))
-
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.condition, data.value_if_true, data.value_if_false])
   
-  def __init__(self, condition, value_if_true, value_if_false):
-    self.condition = condition
-    self.value_if_true = value_if_true
-    self.value_if_false = value_if_false
-    
-  def __repr__(self):
-    return '<If {} ? {} : {}>'.format(self.condition, self.value_if_true, self.value_if_false)
-    
 
     
-class Sub(CfnFunc):
-  yaml_tag = '!Sub'
-  
-  @classmethod
-  def from_yaml(cls, loader, node):
-    # 默认情况下，loader会延迟解析复杂对象。如果不指定deep_construct，values的值会是一个空数组，并稍后填充。
-    loader.deep_construct = True 
-  
-    template = loader.construct_object(node.value[0])
-    values = loader.construct_object(node.value[1])
-    ret = cls(template, values)
-    return ret
-
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.template, data.values])
-  
-  def __init__(self, template, values):
-    self.template = template
-    self.values = values
-    
-  def __repr__(self):
-    return '<Sub "{}".format({})>'.format(self.template, self.values)
-
-
-class Cidr(CfnFunc):
-  yaml_tag = '!Cidr'
-  
-  @classmethod
-  def from_yaml(cls, loader, node):
-    return cls( \
-      loader.construct_object(node.value[0]), \
-      loader.construct_object(node.value[1]), \
-      loader.construct_object(node.value[2]))
-
-  @classmethod
-  def to_yaml(cls, dumper, data):
-    return dumper.represent_sequence(cls.yaml_tag, [data.ipblock, data.count, data.cidrbits])
-  
-  def __init__(self, ipblock, count, cidrbits):
-    self.ipblock = ipblock
-    self.count = count
-    self.cidrbits = cidrbits
-    
-  def __repr__(self):
-    return '<Cidr {} / {} ({})>'.format(self.ipblock, self.count, self.cidrbits)
