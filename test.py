@@ -1,5 +1,5 @@
 import unittest
-from cfnyaml import *
+from cfnyaml import yaml, Base64
 
 class TestCase(unittest.TestCase):
   
@@ -32,6 +32,12 @@ class TestCase(unittest.TestCase):
     b = yaml.dump(yaml.load(a))
     
     assert(a==b)
+
+  def test_Cidr(self):
+    a = '!Select [ 0, !Cidr [ !Select [ 0, !Ref VpcCidrBlock], 1, 8 ]]'
+    print(yaml.load(a))
+    print(yaml.dump(yaml.load(a)))
+
 
 if __name__ == '__main__':
   unittest.main()

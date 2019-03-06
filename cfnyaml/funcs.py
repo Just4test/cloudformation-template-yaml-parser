@@ -198,3 +198,26 @@ class Sub(CfnFunc):
     
   def __repr__(self):
     return '<Sub "{}".format({})>'.format(self.template, self.values)
+
+
+class Cidr(CfnFunc):
+  yaml_tag = '!Cidr'
+  
+  @classmethod
+  def from_yaml(cls, loader, node):
+    return cls( \
+      loader.construct_object(node.value[0]), \
+      loader.construct_object(node.value[1]), \
+      loader.construct_object(node.value[2]))
+
+  @classmethod
+  def to_yaml(cls, dumper, data):
+    return dumper.represent_sequence(cls.yaml_tag, [data.ipblock, data.count, data.cidrbits])
+  
+  def __init__(self, ipblock, count, cidrbits):
+    self.ipblock = ipblock
+    self.count = count
+    self.cidrbits = cidrbits
+    
+  def __repr__(self):
+    return '<Cidr {} / {} ({})>'.format(self.ipblock, self.count, self.cidrbits)
