@@ -55,7 +55,7 @@ class Equals(FuncBase):
     
 class Join(FuncBase):
   argnames = ['delimiter', 'values']
-  reprtemplate = '<Equals {} == {}>'
+  reprtemplate = '<Join "{}".join({})>'
 
 
 
