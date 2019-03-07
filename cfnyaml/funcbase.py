@@ -1,5 +1,14 @@
 import yaml
 
+
+    
+    
+class CfnYamlLoader(yaml.Loader):
+    pass
+    
+class CfnYamlDumper(yaml.Dumper):
+    pass
+
 @classmethod
 def from_yaml(cls, loader, node):
     def getv(v):
@@ -34,7 +43,7 @@ def __repr__(self):
     names = [self.argnames] if isinstance(self.argnames, str) else self.argnames
     return self.reprtemplate.format(*[getattr(self, name) for name in names])
 
-class FuncBaseMetaCls(yaml.YAMLObjectMetaclass):
+class FuncBaseMetaCls(type):
 
     def __new__(cls, name, bases, kwds):
 #        print('new==', cls, name, bases, kwds)
@@ -62,6 +71,27 @@ class FuncBaseMetaCls(yaml.YAMLObjectMetaclass):
 #        print('new!!!!!!!!!!', cls, name, bases, kwds)
         return type.__new__(cls, name, bases, kwds)
         
+        
+    def __init__(cls, name, bases, kwds):
+        super(FuncBaseMetaCls, cls).__init__(name, bases, kwds)
+        if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
+            CfnYamlLoader.add_constructor(cls.yaml_tag, cls.from_yaml)
+            CfnYamlDumper.add_representer(cls, cls.to_yaml)
+        
 
-class FuncBase(yaml.YAMLObject, metaclass=FuncBaseMetaCls):
+class FuncBase(metaclass=FuncBaseMetaCls):
     argnames = []
+    
+    
+    
+def construct_mapping(self, node, deep=False):
+    
+    mapping = ODict()
+
+    for key_node, value_node in node.value:
+        key = self.construct_object(key_node, deep=deep)
+        value = self.construct_object(value_node, deep=deep)
+
+        mapping[key] = value
+
+    return mapping
