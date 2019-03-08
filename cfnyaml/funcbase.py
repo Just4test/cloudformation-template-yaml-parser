@@ -1,20 +1,15 @@
-import yaml
+from ruamel.yaml import YAML, Node
+
+yaml = YAML()
 
 
-    
-    
-class CfnYamlLoader(yaml.Loader):
-    pass
-    
-class CfnYamlDumper(yaml.Dumper):
-    pass
 
 @classmethod
 def from_yaml(cls, loader, node):
     def getv(v):
-        return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+        return v if not isinstance(v, Node) else loader.construct_object(v)
     if isinstance(cls.argnames, str):
-        return cls(getv(node.value))
+        return cls(node.value)
     elif isinstance(cls.argnames, list) or isinstance(cls.argnames, tuple):
         return cls(*[getv(v) for v in node.value])
     else:
@@ -46,7 +41,6 @@ def __repr__(self):
 class FuncBaseMetaCls(type):
 
     def __new__(cls, name, bases, kwds):
-#        print('new==', cls, name, bases, kwds)
         if kwds.get('yaml_tag') is None:
             kwds['yaml_tag'] = '!' + name
             
@@ -74,10 +68,10 @@ class FuncBaseMetaCls(type):
         
     def __init__(cls, name, bases, kwds):
         super(FuncBaseMetaCls, cls).__init__(name, bases, kwds)
-        if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
-            CfnYamlLoader.add_constructor(cls.yaml_tag, cls.from_yaml)
-            CfnYamlDumper.add_representer(cls, cls.to_yaml)
-        
+#        if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
+#            CfnYamlLoader.add_constructor(cls.yaml_tag, cls.from_yaml)
+#            CfnYamlDumper.add_representer(cls, cls.to_yaml)
+        yaml.register_class(cls)
 
 class FuncBase(metaclass=FuncBaseMetaCls):
     argnames = []

@@ -30,100 +30,100 @@ class Base64(FuncBase):
     return '<Base64 "{}">'.format(tmp)
 
 
-class Cidr(FuncBase):
-  argnames = ['ipblock', 'count', 'cidrbits']
-  reprtemplate = '<Cidr {} / {} ({})>'
-  
-
-class FindInMap(FuncBase):
-  argnames = ['mapName', 'topLevelKey', 'secondLevelKey']
-  reprtemplate = '<FindInMap {}[{}][{}]>'
-  
-class GetAtt(FuncBase):
-  argnames = 'path'
-
-  
-class GetAZs(FuncBase):
-  argnames = 'region'
-
-class ImportValue(FuncBase):
-  argnames = 'sharedValueToImport'
-  
-class Equals(FuncBase):
-  argnames = ['value1', 'value2']
-  reprtemplate = '<Equals {} == {}>'
+  class Cidr(FuncBase):
+    argnames = ['ipblock', 'count', 'cidrbits']
+    reprtemplate = '<Cidr {} / {} ({})>'
     
-class Join(FuncBase):
-  argnames = ['delimiter', 'values']
-  reprtemplate = '<Join "{}".join({})>'
 
-
-
-class Select(FuncBase):
-  argnames = ['index', 'values']
-  reprtemplate = '<Select {1}[{0}]>'
-
-class Split(FuncBase):
-  argnames = ['delimiter', 'sourcestr']
-  reprtemplate = '<Select "{1}".split("{0}")>'
+  class FindInMap(FuncBase):
+    argnames = ['mapName', 'topLevelKey', 'secondLevelKey']
+    reprtemplate = '<FindInMap {}[{}][{}]>'
     
-class Sub(FuncBase):
-  argnames = ['template', 'values']
-  reprtemplate = '<Sub "{}".format({})>'
+  class GetAtt(FuncBase):
+    argnames = 'path'
 
-class Transform(FuncBase):
-  argnames = ['name', 'params']
-  
-  
-######## Condition Functions ###############
     
-class And(FuncBase):
-  @classmethod
-  def from_yaml(cls, loader, node):
-    def getv(v):
-      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
-    return cls(*[getv(v) for v in node.value])
+  class GetAZs(FuncBase):
+    argnames = 'region'
+
+  class ImportValue(FuncBase):
+    argnames = 'sharedValueToImport'
     
-  @classmethod
-  def to_yaml(cls, dumper, data):
-      return dumper.represent_sequence(cls.yaml_tag, data.values)
-  
-  def __init__(self, *values):
-    self.values = values
+  class Equals(FuncBase):
+    argnames = ['value1', 'value2']
+    reprtemplate = '<Equals {} == {}>'
       
-  def __repr__(self):
-    return '<And {}>'.format(' && '.join([str(v) for v in self.values]))
-  
+  class Join(FuncBase):
+    argnames = ['delimiter', 'values']
+    reprtemplate = '<Join "{}".join({})>'
 
-class Equals(FuncBase):
-  argnames = ['value1', 'value2']
-  reprtemplate = '<Equals {} == {} >'
 
-class If(FuncBase):
-  argnames = ['condition', 'value_if_true', 'value_if_false']
-  reprtemplate = '<If {} ? {} : {}>'
-  
-class Not(FuncBase):
-  argnames = ['value']
-  reprtemplate = '<Not {}>'
-  
-class Or(FuncBase):
-  @classmethod
-  def from_yaml(cls, loader, node):
-    def getv(v):
-      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
-    return cls(*[getv(v) for v in node.value])
-    
-  @classmethod
-  def to_yaml(cls, dumper, data):
-      return dumper.represent_sequence(cls.yaml_tag, data.values)
 
-  def __init__(self, *values):
-    self.values = values
+  class Select(FuncBase):
+    argnames = ['index', 'values']
+    reprtemplate = '<Select {1}[{0}]>'
+
+  class Split(FuncBase):
+    argnames = ['delimiter', 'sourcestr']
+    reprtemplate = '<Select "{1}".split("{0}")>'
       
-  def __repr__(self):
-    return '<Or {}>'.format(' || '.join([str(v) for v in self.values]))
-  
-  
+  class Sub(FuncBase):
+    argnames = ['template', 'values']
+    reprtemplate = '<Sub "{}".format({})>'
 
+  class Transform(FuncBase):
+    argnames = ['name', 'params']
     
+    
+  ######## Condition Functions ###############
+      
+  class And(FuncBase):
+    @classmethod
+    def from_yaml(cls, loader, node):
+      def getv(v):
+        return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+      return cls(*[getv(v) for v in node.value])
+      
+    @classmethod
+    def to_yaml(cls, dumper, data):
+      return dumper.represent_sequence(cls.yaml_tag, [getattr(data, argname) for argname in cls.argnames])
+    
+    def __init__(self, *values):
+      self.values = values
+        
+    def __repr__(self):
+      return '<And {}>'.format(' && '.join([str(v) for v in self.values]))
+    
+
+  class Equals(FuncBase):
+    argnames = ['value1', 'value2']
+    reprtemplate = '<Equals {} == {} >'
+
+  class If(FuncBase):
+    argnames = ['condition', 'value_if_true', 'value_if_false']
+    reprtemplate = '<If {} ? {} : {}>'
+    
+  class Not(FuncBase):
+    argnames = ['value']
+    reprtemplate = '<Not {}>'
+    
+  class Or(FuncBase):
+    @classmethod
+    def from_yaml(cls, loader, node):
+      def getv(v):
+        return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+      return cls(*[getv(v) for v in node.value])
+      
+    @classmethod
+    def to_yaml(cls, dumper, data):
+      return dumper.represent_sequence(cls.yaml_tag, [getattr(data, argname) for argname in cls.argnames])
+
+    def __init__(self, *values):
+      self.values = values
+        
+    def __repr__(self):
+      return '<Or {}>'.format(' || '.join([str(v) for v in self.values]))
+    
+    
+
+                  
