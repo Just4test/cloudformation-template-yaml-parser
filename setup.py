@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'cfn-yaml',
-    version = '0.1.0',
+    version = '0.1.1',
     keywords = ('CloudFormation', 'YAML'),
     description = 'Let you load cloudformation template.yaml',
     url = 'https://github.com/Just4test/cfn-yaml',
