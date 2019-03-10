@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'cfn-yaml',
-    version = '0.1.1',
+    version = '0.1.2',
     keywords = ('CloudFormation', 'YAML'),
     description = 'Let you load cloudformation template.yaml',
     url = 'https://github.com/Just4test/cfn-yaml',
     license = 'wtfpl',
-    install_requires = ['pyyaml'],
+    install_requires = ['ruamel.yaml'],
 
     author = 'Just4test',
     author_email = 'myservice@just4test.net',
