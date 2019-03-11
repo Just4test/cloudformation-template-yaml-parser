@@ -1,5 +1,6 @@
 from .funcbase import FuncBase
 import base64
+from ruamel.yaml import Node
 
 
 
@@ -80,7 +81,7 @@ class And(FuncBase):
   @classmethod
   def from_yaml(cls, loader, node):
     def getv(v):
-      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+      return v if not isinstance(v, Node) else loader.construct_object(v)
     return cls(*[getv(v) for v in node.value])
     
   @classmethod
@@ -110,7 +111,7 @@ class Or(FuncBase):
   @classmethod
   def from_yaml(cls, loader, node):
     def getv(v):
-      return v if not isinstance(v, yaml.Node) else loader.construct_object(v)
+      return v if not isinstance(v, Node) else loader.construct_object(v)
     return cls(*[getv(v) for v in node.value])
     
   @classmethod
