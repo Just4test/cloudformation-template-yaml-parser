@@ -1,4 +1,4 @@
-from ruamel.yaml import YAML, Node
+from ruamel.yaml import YAML, Node, ScalarNode, SequenceNode
 
 yaml = YAML()
 
@@ -8,9 +8,11 @@ yaml = YAML()
 def from_yaml(cls, loader, node):
     def getv(v):
         return v if not isinstance(v, Node) else loader.construct_object(v)
-    if isinstance(cls.argnames, str):
+#    if isinstance(cls.argnames, str):
+    if isinstance(node, ScalarNode): # Compatible with optional parameters
         return cls(node.value)
-    elif isinstance(cls.argnames, list) or isinstance(cls.argnames, tuple):
+#    elif isinstance(cls.argnames, list) or isinstance(cls.argnames, tuple):
+    elif isinstance(node, SequenceNode): # Compatible with optional parameters
         return cls(*[getv(v) for v in node.value])
     else:
         raise ValueError('{}.argnames should be a string or an array'.format(cls.__name__))

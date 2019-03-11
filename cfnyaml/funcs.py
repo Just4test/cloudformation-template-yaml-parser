@@ -70,6 +70,17 @@ class Split(FuncBase):
 class Sub(FuncBase):
   argnames = ['template', 'values']
   reprtemplate = '<Sub "{}".format({})>'
+  
+  def __init__(self, template, values=None):
+    self.template = template
+    self.values = values
+      
+  @classmethod
+  def to_yaml(cls, dumper, data):
+    if data.values is None:
+      return dumper.represent_scalar(cls.yaml_tag, data.template)
+    else:
+      return dumper.represent_sequence(cls.yaml_tag, [getattr(data, argname) for argname in cls.argnames])
 
 class Transform(FuncBase):
   argnames = ['name', 'params']
