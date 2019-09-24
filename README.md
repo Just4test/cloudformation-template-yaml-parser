@@ -11,10 +11,10 @@ pip3 install -U cfn-yaml
 # How to use
 (In Python 3)
 ```
-> import cfnyaml
-> template = cfnyaml.load(open('template.yaml'))
-> cfnyaml.dump(template)
-> template['Resources']['lambdaFunc1']['Layers'].append(cfnyaml.Ref('lambdaLayer1'))
+import cfnyaml
+template = cfnyaml.load(open('template.yaml'))
+cfnyaml.dump(template)
+template['Resources']['lambdaFunc1']['Layers'].append(cfnyaml.Ref('lambdaLayer1'))
 ```
 
 
